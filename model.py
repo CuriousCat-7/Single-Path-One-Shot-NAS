@@ -215,15 +215,17 @@ def train(args, epoch, train_data, device, model, sampler, criterion, optimizer,
         train_loss += loss.item()
         batch_time = (datetime.now() - end).total_seconds()
         end = datetime.now()
-        writer.add_scalar("Train/loss", loss.item(), step + len(train_data)*epoch)
+        writer.add_scalar("Train/loss", loss.item(), )
         writer.add_scalar("Train/prec1", prec1.item(), step + len(train_data)*epoch)
         writer.add_scalar("Train/prec5", prec5.item(), step + len(train_data)*epoch)
         if args.sample_method == "mcucb":
             try:
                 writer.add_histogram("Train/UCB Score", sampler.ucb_scores, step + len(train_data)*epoch, bins="auto")
+                writer.add_histogram("Train/Freq", sampler.freqs , step + len(train_data)*epoch, bins="auto")
             except ValueError:
-                """error: autodetected range of [inf, inf] is not finite"""
+                # avoid inf
                 pass
+            writer.add_histogram("Train/Value", sampler.values, step + len(train_data)*epoch, bins="auto")
             best_arch = sampler.best_arch
             writer.add_scalars("Train/Best Architecture", {f"layer-{i}": best_arch[i] for i in range(sampler.L)} , step + len(train_data)*epoch)
         postfix = {
