@@ -16,6 +16,18 @@ I have done supernet training on the CIFAR-10 dataset and randomly sampled 1K mo
 | --- | --- |
 | [cifar_super](https://drive.google.com/open?id=1X-PcpQ_oIjhuYOF-MIRnM4wZ7TCdZIf8) | ![cifar_1K_search](https://github.com/ShunLu91/Single-Path-One-Shot-NAS/blob/master/img/cifar_1K_search.png) |
 
+## To Do
+- SPOS
+    - [x] Block Search
+    - [x] Train and Evaluate on CIFAR-10
+- UCB-SPOS
+    - [ ] Use ucb Block Search
+
+## Research
+### Upper Confidence Boundary
+Use UCB rather than uniform sampling
+
+
 ## Environments    
 ```
 Python == 3.6.8, Pytorch == 1.1.0, CUDA == 9.0.176, cuDNN == 7.3.0, GPU == Single GTX 1080Ti 
@@ -30,11 +42,6 @@ CIFAR-10 can be downloaded automatically with this code. ImageNet needs to be ma
 ```
 python supernet.py exp_name spos_cifar
 ```
-
-## To Do
-- [x] Block Search
-- [x] Train and Evaluate on CIFAR-10
-
 ## Reference
 [1]: [Differentiable architecture search for convolutional and recurrent networks](https://github.com/quark0/darts)
              
