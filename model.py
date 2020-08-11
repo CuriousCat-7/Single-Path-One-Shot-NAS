@@ -179,7 +179,7 @@ class SinglePath_Network(nn.Module):
                     nn.init.constant_(m.bias, 0)
 
 
-def train(args, epoch, train_data, device, model, criterion, optimizer, scheduler, supernet, writer=None):
+def train(args, epoch, train_data, device, model, sampler, criterion, optimizer, scheduler, supernet, writer=None):
     model.train()
     train_loss = 0.0
     top1 = utils.AvgrageMeter()
@@ -191,7 +191,14 @@ def train(args, epoch, train_data, device, model, criterion, optimizer, schedule
         data_time = (datetime.now() - end).total_seconds()
         optimizer.zero_grad()
         if supernet:
-            choice = utils.random_choice(args.num_choices, args.layers)
+            if args.sample_method == "uniform":
+                choice = sampler()[0]
+            elif args.sample_method == "mcucb":
+                if sampler.archs:
+                    choice = sampler.archs.pop()
+                else:
+                    sampler.archs = sampler(model, device, args.k, args.m, args.mc_sample_num )
+                    choice = sampler.archs.pop()
             outputs = model(inputs, choice)
         else:
             outputs = model(inputs)
@@ -211,15 +218,23 @@ def train(args, epoch, train_data, device, model, criterion, optimizer, schedule
         writer.add_scalar("Train/loss", loss.item(), step + len(train_data)*epoch)
         writer.add_scalar("Train/prec1", prec1.item(), step + len(train_data)*epoch)
         writer.add_scalar("Train/prec5", prec5.item(), step + len(train_data)*epoch)
+        if args.sample_method == "mcucb":
+            try:
+                writer.add_histogram("Train/UCB Score", sampler.ucb_scores, step + len(train_data)*epoch, bins="auto")
+            except ValueError:
+                """error: autodetected range of [inf, inf] is not finite"""
+                pass
+            best_arch = sampler.best_arch
+            writer.add_scalars("Train/Best Architecture", {f"layer-{i}": best_arch[i] for i in range(sampler.L)} , step + len(train_data)*epoch)
         postfix = {
                 'train_loss': '%.6f' % (train_loss / (step + 1)),
                 'train_acc': '%.6f' % top1.avg,
                 "data_time": "%.6f" % data_time,
-                "batch_time": "%.6f" % batch_time}
+                "batch_time": "%.6f" % batch_time,}
         train_data.set_postfix(log=postfix)
 
 
-def validate(args, epoch, val_data, device, model, criterion, supernet, choice=None):
+def validate(args, epoch, val_data, device, model, sampler, criterion, supernet, choice=None):
     model.eval()
     val_loss = 0.0
     val_top1 = utils.AvgrageMeter()
@@ -228,7 +243,10 @@ def validate(args, epoch, val_data, device, model, criterion, supernet, choice=N
             inputs, targets = inputs.to(device), targets.to(device)
             if supernet:
                 if choice == None:
-                    choice = utils.random_choice(args.num_choices, args.layers)
+                    if args.sample_method == "uniform":
+                            choice = sampler()[0]
+                    elif args.sample_method == "mcucb":
+                        choice = sampler.best_arch
                 outputs = model(inputs, choice)
             else:
                 outputs = model(inputs)

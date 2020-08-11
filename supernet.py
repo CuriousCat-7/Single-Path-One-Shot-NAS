@@ -11,6 +11,7 @@ from utils import data_transforms
 from model import SinglePath_OneShot, train, validate
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
+from sampler import MCUCBSampler, UniformSampler
 
 
 def main():
@@ -21,6 +22,8 @@ def main():
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
+    ## type checking
+    assert args.sample_method in ["uniform", "mcucb"]
 
     # dataset
     assert args.dataset in ['cifar10', 'imagenet']
@@ -45,6 +48,23 @@ def main():
     # SinglePath_OneShot
     model = SinglePath_OneShot(args.dataset, args.resize, args.classes, args.layers)
     criterion = nn.CrossEntropyLoss().to(device)
+    if args.sample_method == "uniform":
+        sampler = UniformSampler([args.num_choices]*args.layers)
+    elif args.sample_method == "mcucb":
+        val_iter = utils.DataIterator(
+                torch.utils.data.DataLoader(
+                    valset, batch_size=args.batch_size,
+                    shuffle=True , pin_memory=True, num_workers=8))
+        sampler = MCUCBSampler(
+                [args.num_choices]*args.layers,
+                val_iter,
+                criterion,
+                args.init_Q,
+                args.freq_weight,
+                alpha=args.value_lr
+                )
+    else:
+        raise NotImplementedError
     optimizer = torch.optim.SGD(model.parameters(), args.learning_rate, args.momentum, args.weight_decay)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1 - (epoch / args.epochs))
 
@@ -63,10 +83,10 @@ def main():
     # train supernet
     start = time.time()
     for epoch in range(args.epochs):
-        train(args, epoch, train_loader, device, model, criterion, optimizer, scheduler, supernet=True, writer=writer)
+        train(args, epoch, train_loader, device, model, sampler, criterion, optimizer, scheduler, supernet=True, writer=writer)
         scheduler.step()
         if (epoch + 1) % args.val_interval == 0:
-            validate(args, epoch, val_loader, device, model, criterion, supernet=True)
+            validate(args, epoch, val_loader, device, model, sampler, criterion, supernet=True)
             utils.save_checkpoint({'state_dict': model.state_dict(), }, epoch + 1, tag=tag)
     utils.time_record(start)
 

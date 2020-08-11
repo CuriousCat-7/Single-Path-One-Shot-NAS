@@ -126,3 +126,20 @@ def time_record(start):
     minute = (duration - hour * 3600) // 60
     second = duration - hour * 3600 - minute * 60
     print('Elapsed time: hour: %d, minute: %d, second: %f' % (hour, minute, second))
+
+
+class DataIterator(object):
+
+    def __init__(self, dataloader):
+        self.dataloader = dataloader
+        self.iterator = enumerate(self.dataloader)
+
+    def next(self):
+        try:
+            _, data = next(self.iterator)
+        except StopIteration:
+            self.iterator = enumerate(self.dataloader)
+            _, data = next(self.iterator)
+        return data[0], data[1]
+
+
