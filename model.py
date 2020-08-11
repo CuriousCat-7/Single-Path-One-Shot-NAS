@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
 from block import Choice_Block, Choice_Block_x
+from datetime import datetime
 
 
 channel = [16,
@@ -178,14 +179,16 @@ class SinglePath_Network(nn.Module):
                     nn.init.constant_(m.bias, 0)
 
 
-def train(args, epoch, train_data, device, model, criterion, optimizer, scheduler, supernet):
+def train(args, epoch, train_data, device, model, criterion, optimizer, scheduler, supernet, writer=None):
     model.train()
     train_loss = 0.0
     top1 = utils.AvgrageMeter()
     train_data = tqdm(train_data)
     train_data.set_description('[%s%04d/%04d %s%f]' % ('Epoch:', epoch + 1, args.epochs, 'lr:', scheduler.get_lr()[0]))
+    end = datetime.now()
     for step, (inputs, targets) in enumerate(train_data):
         inputs, targets = inputs.to(device), targets.to(device)
+        data_time = (datetime.now() - end).total_seconds()
         optimizer.zero_grad()
         if supernet:
             choice = utils.random_choice(args.num_choices, args.layers)
@@ -203,7 +206,16 @@ def train(args, epoch, train_data, device, model, criterion, optimizer, schedule
         n = inputs.size(0)
         top1.update(prec1.item(), n)
         train_loss += loss.item()
-        postfix = {'train_loss': '%.6f' % (train_loss / (step + 1)), 'train_acc': '%.6f' % top1.avg}
+        batch_time = (datetime.now() - end).total_seconds()
+        end = datetime.now()
+        writer.add_scalar("Train/loss", loss.item(), step + len(train_data)*epoch)
+        writer.add_scalar("Train/prec1", prec1.item(), step + len(train_data)*epoch)
+        writer.add_scalar("Train/prec5", prec5.item(), step + len(train_data)*epoch)
+        postfix = {
+                'train_loss': '%.6f' % (train_loss / (step + 1)),
+                'train_acc': '%.6f' % top1.avg,
+                "data_time": "%.6f" % data_time,
+                "batch_time": "%.6f" % batch_time}
         train_data.set_postfix(log=postfix)
 
 

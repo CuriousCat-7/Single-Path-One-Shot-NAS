@@ -9,6 +9,7 @@ from thop import profile
 from torchvision import datasets
 from utils import data_transforms
 from model import SinglePath_OneShot, train, validate
+from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 
 
@@ -55,14 +56,18 @@ def main():
     model = model.to(device)
     summary(model, (3, 32, 32) if args.dataset == 'cifar10' else (3, 224, 224))
 
+    # tensorboard
+    tag = args.exp_name + '_super'
+    writer = SummaryWriter(f"./snapshots/{tag}/runs")
+
     # train supernet
     start = time.time()
     for epoch in range(args.epochs):
-        train(args, epoch, train_loader, device, model, criterion, optimizer, scheduler, supernet=True)
+        train(args, epoch, train_loader, device, model, criterion, optimizer, scheduler, supernet=True, writer=writer)
         scheduler.step()
         if (epoch + 1) % args.val_interval == 0:
             validate(args, epoch, val_loader, device, model, criterion, supernet=True)
-            utils.save_checkpoint({'state_dict': model.state_dict(), }, epoch + 1, tag=args.exp_name + '_super')
+            utils.save_checkpoint({'state_dict': model.state_dict(), }, epoch + 1, tag=tag)
     utils.time_record(start)
 
 
