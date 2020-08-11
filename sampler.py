@@ -43,18 +43,18 @@ class MCUCBSampler(UniformSampler):
     def best_arch(self)-> List[int]:
         return [np.argmax(self.Q[i]).item() for i in range(self.L)]
 
-    def ucb(self, archs:List[int]) -> torch.Tensor:
+    def ucb(self, archs:List[int], m:int) -> torch.Tensor:
         ucb_scores = []
         freqs = []
         values = []
-        self.t += self.L
+        self.t += self.L * m
         for arch in archs:
             Q = 0
             N = 0
             for i in range(len(arch)):
                 Q += self.Q[i][arch[i]]
                 N += self.N[i][arch[i]]
-            freq = np.sqrt( self.L*np.log(self.t/self.L)/N ) if N != 0 else np.float("inf")
+            freq = self.c * np.sqrt( self.L*np.log(self.t/self.L)/N ) if N != 0 else np.float("inf")
             value = Q / self.L
             ucb_score = value + freq
             ucb_scores.append(ucb_score)
@@ -76,7 +76,7 @@ class MCUCBSampler(UniformSampler):
     def __call__(self, model, device, k=5, m=10, sample_num=100) -> List[List[int]]:
         archs = [self.random_choice() for i in range(sample_num)]
         # sample m archs based on ucb
-        self.ucb_scores, self.values, self.freqs = self.ucb(archs)
+        self.ucb_scores, self.values, self.freqs = self.ucb(archs, m)
         values, idxs = torch.topk(self.ucb_scores, k=m)
         idxs = idxs.tolist()
         m_archs = list(map(lambda i: archs[i], idxs))

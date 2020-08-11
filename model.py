@@ -215,7 +215,7 @@ def train(args, epoch, train_data, device, model, sampler, criterion, optimizer,
         train_loss += loss.item()
         batch_time = (datetime.now() - end).total_seconds()
         end = datetime.now()
-        writer.add_scalar("Train/loss", loss.item(), )
+        writer.add_scalar("Train/loss", loss.item(), step + len(train_data)*epoch)
         writer.add_scalar("Train/prec1", prec1.item(), step + len(train_data)*epoch)
         writer.add_scalar("Train/prec5", prec5.item(), step + len(train_data)*epoch)
         if args.sample_method == "mcucb":

@@ -59,8 +59,8 @@ def main():
                 [args.num_choices]*args.layers,
                 val_iter,
                 criterion,
-                args.init_Q,
-                args.freq_weight,
+                init_Q = args.init_Q,
+                c = args.freq_weight,
                 alpha=args.value_lr
                 )
     else:
