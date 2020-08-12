@@ -37,7 +37,7 @@ if __name__ == '__main__':
     best_choice = list()
     for epoch in range(args.random_search):
         choice = utils.random_choice(args.num_choices, args.layers)
-        top1_acc = validate(args, epoch, val_loader, device, model, criterion, super=True, choice=choice)
+        top1_acc = validate(args, epoch, val_loader, device, model, criterion, super=True, choice=choice)["top1_acc"]
         acc_list.append(top1_acc)
         if best_acc < top1_acc:
             best_acc = top1_acc
