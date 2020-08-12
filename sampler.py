@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from typing import List
+from tqdm import tqdm
 
 
 class UniformSampler(object):
@@ -48,7 +49,53 @@ class MCUCBSampler(UniformSampler):
     def best_arch(self)-> List[int]:
         return [np.argmax(self.Q[i]).item() for i in range(self.L)]
 
-    def ucb(self, archs:List[int], m:int) -> torch.Tensor:
+    def cal_value(self, archs:List[List[int]]) -> torch.Tensor:
+        values = []
+        for arch in archs:
+            Q = 0
+            for i in range(len(arch)):
+                Q += self.Q[i][arch[i]]
+            value = Q/self.L
+            values.append(value)
+        return torch.Tensor(values)
+
+    def sample_best_archs(self, cand_archs:List[List[int]]=[], k=100, m=1000):
+        """
+        使用方法
+        bas = []
+        for i in range(100):bas, rate = sampler.sample_best_archs(bas, 100, 1000); print(rate)
+        untill rate == 1.0
+        """
+        archs =  cand_archs + [self.random_choice() for i in range(m-len(cand_archs))]
+        values = self.cal_value(archs)
+        _, idxs = values.topk(k)
+        idxs = idxs.tolist()
+        k_archs = list(map(lambda i: archs[i], idxs))
+        repeat_choose = sum([1 if idx < len(cand_archs) else 0 for idx in idxs ])
+        overlap_rate = repeat_choose/k
+        return k_archs, overlap_rate
+
+    def get_best_archs(self, k=100, m=1000, max_iter=1000, tgt_rate=1.0, tgt_times=5, display=False):
+        """
+        连续5次 overlap == 1, 则意味着收敛
+        """
+        best_archs = []
+        overlap_times = 0
+        for i in tqdm(range(max_iter)):
+            best_archs, rate = self.sample_best_archs(best_archs, k, m)
+            if display:
+                print(f"iter {i} overlap_rate {rate}")
+            if rate >= tgt_rate:
+                overlap_times += 1
+            else:
+                overlap_times = 0
+            if overlap_times >= tgt_times:
+                break
+        if i == max_iter-1:
+            print("warning ! max iter reached")
+        return sorted(best_archs)
+
+    def ucb(self, archs:List[List[int]], m:int) -> torch.Tensor:
         ucb_scores = []
         freqs = []
         values = []
