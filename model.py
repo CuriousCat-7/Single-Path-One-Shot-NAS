@@ -240,6 +240,7 @@ def validate(args, epoch, val_data, device, model, sampler, criterion, supernet,
     model.eval()
     val_loss = 0.0
     val_top1 = utils.AvgrageMeter()
+    val_top5 = utils.AvgrageMeter()
     with torch.no_grad():
         for step, (inputs, targets) in enumerate(val_data):
             inputs, targets = inputs.to(device), targets.to(device)
@@ -257,6 +258,7 @@ def validate(args, epoch, val_data, device, model, sampler, criterion, supernet,
             prec1, prec5 = utils.accuracy(outputs, targets, topk=(1, 5))
             n = inputs.size(0)
             val_top1.update(prec1.item(), n)
+            val_top5.update(prec5.item(), n)
         print('[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f'
               % (epoch + 1, val_loss / (step + 1), val_top1.avg))
-        return val_top1.avg
+        return dict(top1_acc=val_top1.avg, top5_acc=val_top5.avg, loss=val_loss/(step+1) )
