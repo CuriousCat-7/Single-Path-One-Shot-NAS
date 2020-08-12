@@ -119,10 +119,14 @@ class MCUCBSampler(UniformSampler):
             for i in range(len(arch)):
                 self.N[i][arch[i]] += 1
 
-    def update_Q(self, archs:List[List[int]], reward:float):
+    def update_Q(self):
+        for l in range(L):
+            self.Q[l] = self.Q[l]*self.alpha
+
+    def add_R(self, archs:List[List[int]], reward:float):
         for arch in archs:
             for i in range(len(arch)):
-                self.Q[i][arch[i]] = self.Q[i][arch[i]]*self.alpha + reward
+                self.Q[i][arch[i]] = self.Q[i][arch[i]] + reward
 
     def state_dict(self)->dict:
         return dict(
@@ -166,7 +170,8 @@ class MCUCBSampler(UniformSampler):
         """https://stackoverflow.com/a/11303241/7000846"""
         idxs = set(idxs) if  m > 100 else idxs
         not_choosed_archs = [arch for j, arch in enumerate(m_archs) if j not in idxs]
-        self.update_Q(choosed_archs, self.reward[0])
-        self.update_Q(not_choosed_archs, self.reward[1])
+        self.update_Q()
+        self.add_R(choosed_archs, self.reward[0])
+        self.add_R(not_choosed_archs, self.reward[1])
         #self.update_Q(punish_archs, self.reward[2])  # TODO
         return choosed_archs
