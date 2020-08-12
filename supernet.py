@@ -12,6 +12,7 @@ from model import SinglePath_OneShot, train, validate
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 from sampler import MCUCBSampler, UniformSampler
+from torch.nn.parallel import DataParallel
 
 
 def main():
@@ -32,18 +33,18 @@ def main():
         trainset = torchvision.datasets.CIFAR10(root=os.path.join(args.data_dir, 'cifar'), train=True,
                                                 download=True, transform=train_transform)
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                                   shuffle=True, pin_memory=True, num_workers=8)
+                                                   shuffle=True, pin_memory=True, num_workers=args.num_workers)
         valset = torchvision.datasets.CIFAR10(root=os.path.join(args.data_dir, 'cifar'), train=False,
                                               download=True, transform=valid_transform)
         val_loader = torch.utils.data.DataLoader(valset, batch_size=args.batch_size,
-                                                 shuffle=False, pin_memory=True, num_workers=8)
+                                                 shuffle=False, pin_memory=True, num_workers=args.num_workers)
     elif args.dataset == 'imagenet':
         train_data_set = datasets.ImageNet(os.path.join(args.data_dir, 'ILSVRC2012', 'train'), train_transform)
         val_data_set = datasets.ImageNet(os.path.join(args.data_dir, 'ILSVRC2012', 'valid'), valid_transform)
         train_loader = torch.utils.data.DataLoader(train_data_set, batch_size=args.batch_size, shuffle=True,
-                                                   num_workers=8, pin_memory=True, sampler=None)
+                                                   num_workers=args.num_workers, pin_memory=True, sampler=None)
         val_loader = torch.utils.data.DataLoader(val_data_set, batch_size=args.batch_size, shuffle=False,
-                                                 num_workers=8, pin_memory=True)
+                                                 num_workers=args.num_workers, pin_memory=True)
 
     # SinglePath_OneShot
     model = SinglePath_OneShot(args.dataset, args.resize, args.classes, args.layers)
@@ -53,8 +54,8 @@ def main():
     elif args.sample_method == "mcucb":
         val_iter = utils.DataIterator(
                 torch.utils.data.DataLoader(
-                    valset, batch_size=args.batch_size,
-                    shuffle=True , pin_memory=True, num_workers=8))
+                    valset, batch_size=args.sampler_batch_size,
+                    shuffle=True , pin_memory=True, num_workers=args.num_workers))
         sampler = MCUCBSampler(
                 [args.num_choices]*args.layers,
                 val_iter,
@@ -65,7 +66,8 @@ def main():
                 )
     else:
         raise NotImplementedError
-    optimizer = torch.optim.SGD(model.parameters(), args.learning_rate, args.momentum, args.weight_decay)
+    lr = args.learning_rate * args.batch_size / args.base_batch_size
+    optimizer = torch.optim.SGD(model.parameters(), lr, args.momentum, args.weight_decay)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 1 - (epoch / args.epochs))
 
     # flops & params & structure
@@ -75,10 +77,11 @@ def main():
     print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' % ((params / 1e6), (flops / 1e6)))
     model = model.to(device)
     summary(model, (3, 32, 32) if args.dataset == 'cifar10' else (3, 224, 224))
+    model = DataParallel(model)
 
     # tensorboard
     tag = args.exp_name + '_super'
-    writer = SummaryWriter(f"./snapshots/{tag}/runs")
+    writer = SummaryWriter(f"./snapshots/tb/{tag}")
 
     # train supernet
     start = time.time()
