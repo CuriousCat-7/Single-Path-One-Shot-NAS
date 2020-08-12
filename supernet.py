@@ -89,7 +89,12 @@ def main():
             rst = validate(args, epoch, val_loader, device, model, sampler, criterion, supernet=True)
             for key, value in rst.items():
                 writer.add_scalar(f"Valid/{key}", value, epoch+1)
-            utils.save_checkpoint({'state_dict': model.state_dict(), }, epoch + 1, tag=tag)
+            utils.save_checkpoint(
+                    {
+                        'state_dict': model.state_dict(),
+                        "sampler_state_dict": sampler.state_dict()},
+                    epoch + 1,
+                    tag=tag)
     utils.time_record(start)
 
 

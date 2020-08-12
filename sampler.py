@@ -9,6 +9,12 @@ class UniformSampler(object):
     def random_choice(self):
         return [np.random.choice(idx).item() for idx in self.idxs]
 
+    def state_dict(self)->dict:
+        return dict()
+
+    def load_state_dict(self, sd):
+        return
+
     def __call__(self):
         return [self.random_choice()]
 
@@ -31,7 +37,6 @@ class MCUCBSampler(UniformSampler):
         self.criterion = criterion
         self.Q = [np.ones(num_choice)*init_Q for num_choice in num_choices] # List[np.array]
         self.N = [np.zeros(num_choice) for num_choice in num_choices] # List[np.array]
-        self.U = [np.full(num_choice, np.float("inf")) for num_choice in num_choices]
         self.t = 0
         self.c = c
         self.reward = reward
@@ -71,6 +76,23 @@ class MCUCBSampler(UniformSampler):
         for arch in archs:
             for i in range(len(arch)):
                 self.Q[i][arch[i]] = self.Q[i][arch[i]]*self.alpha + reward
+
+    def state_dict(self)->dict:
+        return dict(
+                t=self.t,
+                Q=self.Q,
+                N=self.N,
+                c=self.c,
+                reward=self.reward,
+                alpha=self.alpha)
+
+    def load_state_dict(self, sd:dict):
+        self.t = sd["t"]
+        self.Q = sd["Q"]
+        self.N = sd["N"]
+        self.c = sd["c"]
+        self.reward = sd["reward"]
+        self.alpha = sd["alpha"]
 
     @torch.no_grad()
     def __call__(self, model, device, k=5, m=10, sample_num=100) -> List[List[int]]:
