@@ -21,7 +21,7 @@ I have done supernet training on the CIFAR-10 dataset and randomly sampled 1K mo
     - [x] Block Search
     - [x] Train and Evaluate on CIFAR-10
 - UCB-SPOS
-    - [ ] Use ucb Block Search
+    - [x] Use ucb Block Search
 
 ## Research
 ### Upper Confidence Boundary
