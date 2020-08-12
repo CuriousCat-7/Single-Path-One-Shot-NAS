@@ -12,6 +12,7 @@ def get_args():
     parser.add_argument('--base_batch_size', type=int, default=96, help='base batch size')
     parser.add_argument('--batch_size', type=int, default=96, help='batch size')
     parser.add_argument('--sampler_batch_size', type=int, default=96, help='batch size')
+    parser.add_argument('--display_interval', type=int, default=1, help='batch size')
     parser.add_argument('--epochs', type=int, default=600, help='batch size')
     parser.add_argument('--learning_rate', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
