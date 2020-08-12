@@ -120,7 +120,7 @@ class MCUCBSampler(UniformSampler):
                 self.N[i][arch[i]] += 1
 
     def update_Q(self):
-        for l in range(L):
+        for l in range(self.L):
             self.Q[l] = self.Q[l]*self.alpha
 
     def add_R(self, archs:List[List[int]], reward:float):
