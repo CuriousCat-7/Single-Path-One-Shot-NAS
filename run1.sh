@@ -17,7 +17,7 @@
 #    --sampler_batch_size 96 \
 
 CUDA_VISIBLE_DEVICES=6 python supernet.py \
-    --exp_name v3_mcucb_spos_cifar10 \
+    --exp_name v4_mcucb_spos_cifar10 \
     --data_dir ~/data/torch\
     --classes 10\
     --dataset cifar10\
