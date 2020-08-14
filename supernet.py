@@ -13,13 +13,20 @@ from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 from sampler import MCUCBSampler, UniformSampler
 from torch.nn.parallel import DataParallel
+from loguru import logger
 
 
 def main():
     # args & device
     args = config.get_args()
+
+    # tensorboard, logger
+    tag = args.exp_name + '_super'
+    writer = SummaryWriter(f"./snapshots/tb/{tag}")
+    logger.add(f"snapshots/logs/{tag}.log")
+
     if torch.cuda.is_available():
-        print('Train on GPU!')
+        logger.info('Train on GPU!')
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -74,14 +81,10 @@ def main():
     flops, params = profile(model, inputs=(torch.randn(1, 3, 32, 32),) if args.dataset == 'cifar10'
                             else (torch.randn(1, 3, 224, 224),), verbose=False)
     # print(model)
-    print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' % ((params / 1e6), (flops / 1e6)))
+    logger.info('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' % ((params / 1e6), (flops / 1e6)))
     model = model.to(device)
     summary(model, (3, 32, 32) if args.dataset == 'cifar10' else (3, 224, 224))
     model = DataParallel(model)
-
-    # tensorboard
-    tag = args.exp_name + '_super'
-    writer = SummaryWriter(f"./snapshots/tb/{tag}")
 
     # train supernet
     start = time.time()

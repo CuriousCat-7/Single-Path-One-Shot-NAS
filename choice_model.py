@@ -10,13 +10,20 @@ from torchvision import datasets
 from utils import data_transforms
 from model import SinglePath_Network, train, validate
 from torchsummary import summary
+from loguru import logger
+from torch.utils.tensorboard import SummaryWriter
 
 
 def main():
     # args & device
     args = config.get_args()
+
+    # tensorboard logger
+    writer = SummaryWriter(f"./snapshots/tb/{args.exp_name}")
+    logger.add(f"snapshots/logs/{args.exp_name}.log")
+
     if torch.cuda.is_available():
-        print('Train on GPU!')
+        logger.info('Train on GPU!')
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -42,7 +49,7 @@ def main():
                                                  num_workers=8, pin_memory=True)
 
     # SinglePath_OneShot
-    choice = [2, 0, 2, 3, 2, 2, 3, 1, 2, 1, 0, 1, 0, 3, 1, 0, 0, 2, 3, 2]
+    choice = eval(args.choice)
     model = SinglePath_Network(args.dataset, args.resize, args.classes, args.layers, choice)
     criterion = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(model.parameters(), args.learning_rate, args.momentum, args.weight_decay)
@@ -52,17 +59,17 @@ def main():
     flops, params = profile(model, inputs=(torch.randn(1, 3, 32, 32),) if args.dataset == 'cifar10'
                             else (torch.randn(1, 3, 224, 224),), verbose=False)
     # print(model)
-    print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' % ((params / 1e6), (flops / 1e6)))
+    logger.info('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' % ((params / 1e6), (flops / 1e6)))
     model = model.to(device)
     summary(model, (3, 32, 32) if args.dataset == 'cifar10' else (3, 224, 224))
 
     # train supernet
     start = time.time()
     for epoch in range(args.epochs):
-        train(args, epoch, train_loader, device, model, criterion, optimizer, scheduler, supernet=False)
+        train(args, epoch, train_loader, device, model, None, criterion, optimizer, scheduler, supernet=False, writer=writer)
         scheduler.step()
         if (epoch + 1) % args.val_interval == 0:
-            validate(args, epoch, val_loader, device, model, criterion, supernet=False)
+            validate(args, epoch, val_loader, device, model, None, criterion, supernet=False, writer=writer)
             utils.save_checkpoint({'state_dict': model.state_dict(), }, epoch + 1, tag=args.exp_name)
     utils.time_record(start)
 

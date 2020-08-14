@@ -26,6 +26,7 @@ def get_args():
     parser.add_argument('--sample_method', type=str, default='uniform', help='method to sample path ')
     parser.add_argument('--val_interval', type=int, default=5, help='validate and save frequency')
     parser.add_argument('--random_search', type=int, default=1000, help='validate and save frequency')
+    parser.add_argument('--choice', type=str, default="[2, 0, 2, 3, 2, 2, 3, 1, 2, 1, 0, 1, 0, 3, 1, 0, 0, 2, 3, 2]", help='choice to retrain')
     # ******************************* dataset *******************************#
     parser.add_argument('--dataset', type=str, default='cifar10', help='path to the dataset')
     parser.add_argument('--cutout', action='store_true', help='use cutout')
