@@ -25,6 +25,8 @@ def main():
     writer = SummaryWriter(f"./snapshots/tb/{tag}")
     logger.add(f"snapshots/logs/{tag}.log")
 
+    logger.info(args)
+
     if torch.cuda.is_available():
         logger.info('Train on GPU!')
         device = torch.device("cuda")

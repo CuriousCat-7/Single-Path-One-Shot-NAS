@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
+from loguru import logger
 
 
 class AvgrageMeter(object):
@@ -125,7 +126,7 @@ def time_record(start):
     hour = duration // 3600
     minute = (duration - hour * 3600) // 60
     second = duration - hour * 3600 - minute * 60
-    print('Elapsed time: hour: %d, minute: %d, second: %f' % (hour, minute, second))
+    logger.info('Elapsed time: hour: %d, minute: %d, second: %f' % (hour, minute, second))
 
 
 class DataIterator(object):
