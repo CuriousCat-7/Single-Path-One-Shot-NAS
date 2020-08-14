@@ -94,9 +94,7 @@ def main():
         train(args, epoch, train_loader, device, model, sampler, criterion, optimizer, scheduler, supernet=True, writer=writer)
         scheduler.step()
         if (epoch + 1) % args.val_interval == 0:
-            rst = validate(args, epoch, val_loader, device, model, sampler, criterion, supernet=True)
-            for key, value in rst.items():
-                writer.add_scalar(f"Valid/{key}", value, epoch+1)
+            validate(args, epoch, val_loader, device, model, sampler, criterion, supernet=True, writer=writer)
             utils.save_checkpoint(
                     {
                         'state_dict': model.state_dict(),

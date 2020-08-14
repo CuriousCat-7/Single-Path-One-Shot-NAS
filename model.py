@@ -238,7 +238,7 @@ def train(args, epoch, train_data, device, model, sampler, criterion, optimizer,
         train_data.set_postfix(log=postfix)
 
 
-def validate(args, epoch, val_data, device, model, sampler, criterion, supernet, choice=None):
+def validate(args, epoch, val_data, device, model, sampler, criterion, supernet, choice=None, writer=None):
     model.eval()
     val_loss = 0.0
     val_top1 = utils.AvgrageMeter()
@@ -263,4 +263,9 @@ def validate(args, epoch, val_data, device, model, sampler, criterion, supernet,
             val_top5.update(prec5.item(), n)
         logger.info('[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f'
               % (epoch + 1, val_loss / (step + 1), val_top1.avg))
-        return dict(top1_acc=val_top1.avg, top5_acc=val_top5.avg, loss=val_loss/(step+1) )
+
+        rst = dict(top1_acc=val_top1.avg, top5_acc=val_top5.avg, loss=val_loss/(step+1) )
+        if writer:
+            for key, value in rst.items():
+                writer.add_scalar(f"Valid/{key}", value, epoch+1)
+        return rst
