@@ -6,6 +6,7 @@ from tqdm import tqdm
 import torch.nn as nn
 from block import Choice_Block, Choice_Block_x
 from datetime import datetime
+from loguru import logger
 
 
 channel = [16,
@@ -215,11 +216,11 @@ def train(args, epoch, train_data, device, model, sampler, criterion, optimizer,
         train_loss += loss.item()
         batch_time = (datetime.now() - end).total_seconds()
         end = datetime.now()
-        if int(step + len(train_data)*epoch) % args.display_interval == 0:
+        if int(step + len(train_data)*epoch) % args.display_interval == 0 and (writer is not None):
             writer.add_scalar("Train/loss", loss.item(), step + len(train_data)*epoch)
             writer.add_scalar("Train/prec1", prec1.item(), step + len(train_data)*epoch)
             writer.add_scalar("Train/prec5", prec5.item(), step + len(train_data)*epoch)
-            if args.sample_method == "mcucb":
+            if supernet and args.sample_method == "mcucb":
                 try:
                     writer.add_histogram("Train/UCB Score", sampler.ucb_scores, step + len(train_data)*epoch, bins="auto")
                     writer.add_histogram("Train/Freq", sampler.freqs , step + len(train_data)*epoch, bins="auto")
@@ -260,6 +261,6 @@ def validate(args, epoch, val_data, device, model, sampler, criterion, supernet,
             n = inputs.size(0)
             val_top1.update(prec1.item(), n)
             val_top5.update(prec5.item(), n)
-        print('[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f'
+        logger.info('[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f'
               % (epoch + 1, val_loss / (step + 1), val_top1.avg))
         return dict(top1_acc=val_top1.avg, top5_acc=val_top5.avg, loss=val_loss/(step+1) )
