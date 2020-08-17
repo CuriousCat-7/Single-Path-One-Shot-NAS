@@ -27,6 +27,11 @@ I have done supernet training on the CIFAR-10 dataset and randomly sampled 1K mo
 ### Upper Confidence Boundary
 Use UCB rather than uniform sampling
 
+### Random Search
+for SuperNet:
+Best unifrom arch: [1, 0, 3, 2, 2, 1, 2, 3, 1, 0, 3, 1, 1, 3, 3, 3, 0, 3, 0, 2], acc 88.5099, ![unifrom](./img/uniform_spos_cifar10.png)
+Best ucb arch: [3, 3, 3, 0, 3, 3, 1, 1, 1, 0, 0, 1, 1, 2, 2, 1, 3, 3, 0, 3], acc 90.3699, ![v4_ucb](./img/v4_mcucb_spos_cifar10.png)
+
 
 ## Environments    
 ```
