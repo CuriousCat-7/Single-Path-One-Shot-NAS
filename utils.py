@@ -144,3 +144,12 @@ class DataIterator(object):
         return data[0], data[1]
 
 
+
+def get_net_state_dict(state_dict):
+    ns = {}
+    for key, value in state_dict.items():
+        if key.endswith(".total_ops") or key.endswith(".total_params"):
+            continue
+        if key.startswith('module.'):
+            ns[key[7:]] = value
+    return ns
