@@ -32,9 +32,15 @@
 #    --freq_weight 100\
 # 重复开山的实验，效果可复现，下面是valid_acc 90 的choice
 
-CUDA_VISIBLE_DEVICES=6 python choice_model.py\
-    --exp_name v4_mcucb_spos_cifar10 \
-    --data_dir ~/data/torch\
+#CUDA_VISIBLE_DEVICES=6 python choice_model.py\
+#    --exp_name v4_mcucb_spos_cifar10 \
+#    --data_dir ~/data/torch\
+#    --classes 10\
+#    --dataset cifar10\
+#    --choice '[3, 2, 3, 3, 1, 1, 2, 0, 0, 3, 2, 2, 3, 2, 3, 2, 0, 2, 2, 1]'
+
+python flops_counter.py\
+    --exp_name uniform_spos_cifar10 \
     --classes 10\
     --dataset cifar10\
     --choice '[3, 2, 3, 3, 1, 1, 2, 0, 0, 3, 2, 2, 3, 2, 3, 2, 0, 2, 2, 1]'
