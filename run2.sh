@@ -1,5 +1,5 @@
 CUDA_VISIBLE_DEVICES=4 python supernet.py \
-    --exp_name k1m2_mcucb_spos_cifar10 \
+    --exp_name k50m100_mcucb_spos_cifar10 \
     --data_dir ~/data/torch\
     --classes 10\
     --dataset cifar10\
