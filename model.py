@@ -252,6 +252,7 @@ def validate(args, epoch, val_data, device, model, sampler, criterion, supernet,
                             choice = sampler()[0]
                     elif args.sample_method == "mcucb":
                         choice = sampler.best_arch
+                        logger.info("best arch: {}", choice)
                 outputs = model(inputs, choice)
             else:
                 outputs = model(inputs)
