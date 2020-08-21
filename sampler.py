@@ -36,13 +36,13 @@ class MCUCBSampler(UniformSampler):
         super().__init__(num_choices)
         self.valid_iter = valid_iter
         self.criterion = criterion
+        self.L = len(num_choices)  # number for layers
         self.Q = [np.ones(num_choice)*init_Q for num_choice in num_choices] # List[np.array]
         self.N = [np.zeros(num_choice) for num_choice in num_choices] # List[np.array]
         self.t = 0
         self.c = c
         self.reward = reward
         self.alpha = alpha
-        self.L = len(num_choices)  # number for layers
         self.archs = []
 
     @property
@@ -170,3 +170,22 @@ class MCUCBSampler(UniformSampler):
         self.update_Q(not_choosed_archs, self.reward[1])
         #self.update_Q(punish_archs, self.reward[2])  # TODO
         return choosed_archs
+
+
+class MCUCBSamplerV2(MCUCBSampler):
+    def update_Q(self, archs:List[List[int]], reward:float):
+        """
+        感觉Q应该一波同时更新, 而折扣则应该在末尾进行统一折扣
+        """
+        update_Q = [ np.zeros(len(q)) for q in self.Q ]
+        sample_times = [ np.zeros(len(q)) for q in self.Q ]
+        for arch in archs:
+            for i in range(len(arch)):
+                if reward != 0:
+                    update_Q[i][arch[i]] += reward
+                sample_times[i][arch[i]] += 1
+        for i in range(self.L):
+            sample_times[i] = (sample_times[i] > 0)  # 要不要加倍率？
+            for j in range(len(self.Q[i])):
+                if sample_times[i][j]:
+                    self.Q[i][j] = self.Q[i][j] * self.alpha

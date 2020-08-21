@@ -194,7 +194,7 @@ def train(args, epoch, train_data, device, model, sampler, criterion, optimizer,
         if supernet:
             if args.sample_method == "uniform":
                 choice = sampler()[0]
-            elif args.sample_method == "mcucb":
+            elif args.sample_method.startswith("mcucb"):
                 if sampler.archs:
                     choice = sampler.archs.pop()
                 else:
@@ -220,7 +220,7 @@ def train(args, epoch, train_data, device, model, sampler, criterion, optimizer,
             writer.add_scalar("Train/loss", loss.item(), step + len(train_data)*epoch)
             writer.add_scalar("Train/prec1", prec1.item(), step + len(train_data)*epoch)
             writer.add_scalar("Train/prec5", prec5.item(), step + len(train_data)*epoch)
-            if supernet and args.sample_method == "mcucb":
+            if supernet and args.sample_method.startswith("mcucb"):
                 try:
                     writer.add_histogram("Train/UCB Score", sampler.ucb_scores, step + len(train_data)*epoch, bins="auto")
                     writer.add_histogram("Train/Freq", sampler.freqs , step + len(train_data)*epoch, bins="auto")
@@ -250,7 +250,7 @@ def validate(args, epoch, val_data, device, model, sampler, criterion, supernet,
                 if choice == None:
                     if args.sample_method == "uniform":
                             choice = sampler()[0]
-                    elif args.sample_method == "mcucb":
+                    elif args.sample_method.startswith("mcucb"):
                         choice = sampler.best_arch
                         logger.info("best arch: {}", choice)
                 outputs = model(inputs, choice)

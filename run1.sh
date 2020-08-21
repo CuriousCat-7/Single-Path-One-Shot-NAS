@@ -45,8 +45,17 @@
 #    --dataset cifar10\
 #    --choice '[3, 2, 3, 3, 1, 1, 2, 0, 0, 3, 2, 2, 3, 2, 3, 2, 0, 2, 2, 1]'
 
-CUDA_VISIBLE_DEVICES=6 python random_search.py\
-    --exp_name  v4_mcucb_spos_cifar10\
+#CUDA_VISIBLE_DEVICES=6 python random_search.py\
+#    --exp_name  v4_mcucb_spos_cifar10\
+#    --data_dir ~/data/torch\
+#    --classes 10\
+#    --dataset cifar10\
+
+
+CUDA_VISIBLE_DEVICES=6 python supernet.py\
+    --exp_name  mcucb_v2_spos_cifar10\
     --data_dir ~/data/torch\
     --classes 10\
     --dataset cifar10\
+    --sample_method mcucb_v2\
+    --freq_weight 100\

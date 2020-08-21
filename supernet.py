@@ -11,7 +11,7 @@ from utils import data_transforms
 from model import SinglePath_OneShot, train, validate
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
-from sampler import MCUCBSampler, UniformSampler
+from sampler import *
 from torch.nn.parallel import DataParallel
 from loguru import logger
 
@@ -33,7 +33,7 @@ def main():
     else:
         device = torch.device("cpu")
     ## type checking
-    assert args.sample_method in ["uniform", "mcucb"]
+    assert args.sample_method in ["uniform", "mcucb", "mcucb_v2"]
 
     # dataset
     assert args.dataset in ['cifar10', 'imagenet']
@@ -60,19 +60,26 @@ def main():
     criterion = nn.CrossEntropyLoss().to(device)
     if args.sample_method == "uniform":
         sampler = UniformSampler([args.num_choices]*args.layers)
-    elif args.sample_method == "mcucb":
+    elif args.sample_method.startswith("mcucb"):
         val_iter = utils.DataIterator(
                 torch.utils.data.DataLoader(
                     valset, batch_size=args.sampler_batch_size,
                     shuffle=True , pin_memory=True, num_workers=args.num_workers))
-        sampler = MCUCBSampler(
+        if args.sample_method == "mcucb":
+            Sa = MCUCBSampler
+        elif args.sample_method == "mcucb_v2":
+            Sa = MCUCBSamplerV2
+        else:
+            raise NotImplementedError
+
+        sampler = Sa(
                 [args.num_choices]*args.layers,
                 val_iter,
                 criterion,
                 init_Q = args.init_Q,
                 c = args.freq_weight,
-                alpha=args.value_lr
-                )
+                alpha=args.value_lr,
+                reward=eval(args.reward))
     else:
         raise NotImplementedError
     lr = args.learning_rate * args.batch_size / args.base_batch_size

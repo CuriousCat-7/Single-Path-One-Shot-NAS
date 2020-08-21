@@ -21,6 +21,7 @@ def get_args():
     parser.add_argument('--mc_sample_num', type=int, default=100)
     parser.add_argument('--freq_weight', type=float, default=1.0, help='C')
     parser.add_argument('--init_Q', type=float, default=0.0)
+    parser.add_argument('--reward', type=str, default='[1, 0, -1]', help='rewards')
     parser.add_argument('--value_lr', type=float, default=0.99, help='alpha')
     parser.add_argument('--weight-decay', type=float, default=3e-4, help='weight decay')
     parser.add_argument('--sample_method', type=str, default='uniform', help='method to sample path ')
