@@ -46,6 +46,10 @@ class MCUCBSampler(UniformSampler):
         self.archs = []
 
     @property
+    def layer_Q_std(self)-> List[int]:
+        return [q.std() for q in self.Q]
+
+    @property
     def best_arch(self)-> List[int]:
         return [np.argmax(self.Q[i]).item() for i in range(self.L)]
 
