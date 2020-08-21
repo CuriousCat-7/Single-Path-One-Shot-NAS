@@ -188,4 +188,4 @@ class MCUCBSamplerV2(MCUCBSampler):
             sample_times[i] = (sample_times[i] > 0)  # 要不要加倍率？
             for j in range(len(self.Q[i])):
                 if sample_times[i][j]:
-                    self.Q[i][j] = self.Q[i][j] * self.alpha
+                    self.Q[i][j] = self.Q[i][j] * self.alpha + update_Q[i][j]
